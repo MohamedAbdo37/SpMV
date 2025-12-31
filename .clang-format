@@ -1,0 +1,26 @@
+# Use Google style as a base (very readable)
+BasedOnStyle: Google
+
+# Use 4 spaces for indentation (instead of Google's 2)
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# Allow lines to be up to 100 characters long
+ColumnLimit: 100
+
+# Spaces before parentheses in control statements (e.g., if (x) instead of if(x))
+SpaceBeforeParens: ControlStatements
+
+# Keep functions on one line if they are short? No, force them to wrap for clarity.
+AllowShortFunctionsOnASingleLine: Empty
+
+# Pointer alignment: "int* p" vs "int *p" (Left is usually preferred in C++)
+PointerAlignment: Left
+
+# Sort includes alphabetically (keeps header files organized)
+SortIncludes: true
+
+# Break arguments onto new lines if they don't fit
+BinPackArguments: false
+BinPackParameters: false
