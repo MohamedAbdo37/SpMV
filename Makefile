@@ -4,7 +4,7 @@ CXX = g++
 CXXFLAGS = -I./include -O2 -Wall -fopenmp
 
 
-SRCS = src/main.cpp src/utils.cpp
+SRCS = src/main.cpp src/utils.cpp src/spmv_serial.cpp src/spmv_parallel.cpp
 
 TARGET = spmv_app
 
