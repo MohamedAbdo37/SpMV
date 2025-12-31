@@ -3,7 +3,7 @@
 #include "spmv.h"
 
 void spmv_parallel(const CSRMatrix& A, const double* x, double* y) {
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < A.num_rows; i++) {
         double sum = 0.0;
 

@@ -1,3 +1,5 @@
+#include <omp.h>
+
 #include <chrono>
 #include <iostream>
 #include <vector>
@@ -7,16 +9,18 @@
 
 const int NUM_RUNS = 10;
 
+using namespace std;
+
 double benchmarkSerial(const CSRMatrix& mat, const double* x, double* y) {
     // warm-up
     spmv_serial(mat, x, y);
 
     double total = 0.0;
     for (int i = 0; i < NUM_RUNS; i++) {
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start = chrono::high_resolution_clock::now();
         spmv_serial(mat, x, y);
-        auto end = std::chrono::high_resolution_clock::now();
-        total += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        auto end = chrono::high_resolution_clock::now();
+        total += chrono::duration_cast<chrono::microseconds>(end - start).count();
     }
     return (total / NUM_RUNS) / 1000.0;  // ms
 }
@@ -25,27 +29,44 @@ double benchmarkParallel(const CSRMatrix& mat, const double* x, double* y) {
     // warm-up
     spmv_parallel(mat, x, y);
 
+    static bool printed = false;
+    if (!printed) {
+#pragma omp parallel
+        {
+#pragma omp single
+            {
+                std::cout << "OpenMP threads used: " << omp_get_num_threads() << "\n";
+            }
+        }
+        printed = true;
+    }
+
     double total = 0.0;
     for (int i = 0; i < NUM_RUNS; i++) {
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start = chrono::high_resolution_clock::now();
         spmv_parallel(mat, x, y);
-        auto end = std::chrono::high_resolution_clock::now();
-        total += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        auto end = chrono::high_resolution_clock::now();
+        total += chrono::duration_cast<chrono::microseconds>(end - start).count();
     }
     return (total / NUM_RUNS) / 1000.0;  // ms
 }
 
 int main() {
-    std::vector<int> sizes = {1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 20000};
-    std::vector<double> densities = {0.01, 0.02, 0.05, 0.1, 0.15, 0.2};
+    omp_set_num_threads(omp_get_max_threads());
+
+    // optional but recommended
+    std::cout << "Using up to " << omp_get_max_threads() << " OpenMP threads\n";
+
+    vector<int> sizes = {1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 20000, 30000};
+    vector<double> densities = {0.01, 0.02, 0.05, 0.1, 0.15, 0.2};
 
     initializeResultsOutputFile();
 
     for (double density : densities) {
-        std::cout << "================ Density: " << density * 100 << "% ================\n";
+        cout << "================ Density: " << density * 100 << "% ================\n";
 
         for (int size : sizes) {
-            std::cout << "--- Size: " << size << " x " << size << " ---\n";
+            cout << "--- Size: " << size << " x " << size << " ---\n";
 
             CSRMatrix matrix = generateRandomCSR(size, size, density);
             double* x = generateDoubleVector(size);
@@ -61,10 +82,10 @@ int main() {
             writeResultsToFile(
                 parallelTime, density, 1, size, size, memoryStats.first, memoryStats.second);
 
-            std::cout << "Serial:   " << serialTime << " ms\n";
-            std::cout << "Parallel: " << parallelTime << " ms\n";
-            std::cout << "Speedup:  " << serialTime / parallelTime << "x\n";
-            std::cout << "--------------------------------------------\n";
+            cout << "Serial:   " << serialTime << " ms\n";
+            cout << "Parallel: " << parallelTime << " ms\n";
+            cout << "Speedup:  " << serialTime / parallelTime << "x\n";
+            cout << "--------------------------------------------\n";
 
             freeCSR(matrix);
             delete[] x;
